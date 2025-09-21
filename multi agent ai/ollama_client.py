@@ -9,7 +9,7 @@ def query_ollama(prompt: str, model: str = "gemma:2b") -> str:
         response = requests.post(
             "http://localhost:11434/api/generate",
             json={"model": model, "prompt": prompt},
-            timeout=60
+            timeout=1000
         )
 
         # Ollama streams responses. If `response.json()` fails, handle line-streaming.
