@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Multi-Agent Assistant</title>
+  <!-- Add this inside <head> -->
+<script src="script.js"></script>
+
+  <style>
+    body {
+      font-family: Inter, Arial, sans-serif;
+      background: #0f1724;
+      color: #e6eef8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .box {
+      width: 720px;
+      background: #111827;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+      overflow-y: auto;
+      max-height: 90vh;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 0;
+      background: #061025;
+      color: #e6eef8;
+      resize: vertical;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 12px;
+      border-radius: 8px;
+      border: 0;
+      background: linear-gradient(90deg,#7c5cff,#00d4ff);
+      color: #021025;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.9; }
+    .out {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #021221;
+      white-space: pre-wrap;
+      min-height: 50px;
+    }
+    .step {
+      margin-top: 10px;
+      padding: 10px;
+      border-left: 3px solid #00d4ff;
+      background: #0a1628;
+      border-radius: 6px;
+    }
+    .step strong { color: #7c5cff; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>Multi-Agent Assistant (Ollama)</h2>
+    <label for="req">Enter your requirement:</label>
+    <textarea id="req" placeholder="Type your idea (e.g. 'build a to-do list app')"></textarea>
+    <button id="send">Run Pipeline</button>
+    <div id="result" class="out">⚡ Waiting for input...</div>
+  </div>
+
+<script>
+document.getElementById('send').onclick = async function() {
+  const req = document.getElementById('req').value.trim();
+  const resEl = document.getElementById('result');
+  if (!req) {
+    resEl.textContent = '⚠️ Please add a requirement.';
+    return;
+  }
+  resEl.textContent = '⏳ Processing...';
+  try {
+    const r = await fetch('/process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requirement: req })
+    });
+    const j = await r.json();
+    if (r.ok) {
+      let html = `<h3>✅ Final Answer</h3><div>${j.FinalOutput || "⚠️ No result returned."}</div>`;
+      if (j.AllAgents) {
+        html += "<hr><h4>🔎 Intermediate Steps</h4>";
+        for (const [step, output] of Object.entries(j.AllAgents)) {
+          html += `<div class="step"><strong>${step}:</strong><br>${output}</div>`;
+        }
+      }
+      resEl.innerHTML = html;
+    } else {
+      resEl.textContent = '❌ Error: ' + (j.error || r.status);
+    }
+  } catch (err) {
+    resEl.textContent = '❌ Request failed: ' + err.message;
+  }
+};
+</script>
+</body>
+</html>
